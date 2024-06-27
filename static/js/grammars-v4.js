@@ -46,7 +46,7 @@ async function selectGrammar() {
         $("#grammar").data("lexerSession").setValue(SAMPLE_LEXER);
         $("#grammar").data("parserSession").setValue(SAMPLE_PARSER);
         $("#input").data("session").setValue(SAMPLE_INPUT);
-        $("#start").text("program");
+        $("#start").text("root");
         $("#grammar").data("editor").setSession($("#grammar").data("parserSession")); // force redraw.
         $("#parsertab").addClass("tabs-header-selected");
         $("#lexertab").removeClass("tabs-header-selected");
