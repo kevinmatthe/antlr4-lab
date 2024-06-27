@@ -69,9 +69,9 @@ NEAR: 'NEAR';
 // Tokens
 NUMBER: [0-9]+;
 
-NAME: ('\\' . | ~[ +-/:=()<>[\]])+;
+NAME: ('\\\\' . | ~[ "+-/:=()<>[\\]])+;
 
-STRING: '"' ( ~["\\\n\r] | '\\' .)* '"';
+STRING: '"' ( ~["\\\\n\\r] | '\\\\' .)* '"';
 
 // Operators
 PLUS: '+';
@@ -90,7 +90,7 @@ COLON: ':';
 NEAROP: '<near/' [0-9]+ '>';
 
 // Whitespace
-WS: [ \t\r\n]+ -> skip;
+WS: [ \\t\\r\\n]+ -> skip;
 `
 
 let SAMPLE_INPUT =`(AI/AIGC/artificial intelligence/"AI-generated"/"AI-powered"/"AI-written")+(social media/tech*/bytedance/tiktok/capcut/fizzo/music/meta/facebook/instagram/twitter/x/alphabet/google/snap/snapchat/openai/open ai/chatgpt/chat/chatbot/bard/spotify/midjourney/mid journey/stable diffusion/stability AI)+(nudity/underage/minors/misinformation/misinfo/disinfo/worrying/worrisome/controversial/election)+A-#`
