@@ -2,57 +2,98 @@
 
 let ANTLR_SERVICE = "/parse/";
 
-let SAMPLE_PARSER =
-    "parser grammar ExprParser;\n" +
-    "options { tokenVocab=ExprLexer; }\n" +
-    "\n" +
-    "program\n" +
-    "    : stat EOF\n" +
-    "    | def EOF\n" +
-    "    ;\n" +
-    "\n" +
-    //"foo : 'a' 'abc' 'a\\'b' '\\u34ab' 'ab\\ncd' ;\n" +
-    "stat: ID '=' expr ';'\n" +
-    "    | expr ';'\n" +
-    "    ;\n" +
-    "\n" +
-    "def : ID '(' ID (',' ID)* ')' '{' stat* '}' ;\n" +
-    "\n" +
-    "expr: ID\n" +
-    "    | INT\n" +
-    "    | func\n" +
-    "    | 'not' expr\n" +
-    "    | expr 'and' expr\n" +
-    "    | expr 'or' expr\n" +
-    "    ;\n" +
-    "\n" +
-    "func : ID '(' expr (',' expr)* ')' ;"
+let SAMPLE_PARSER =`parser grammar OwlsExprParser;
 
-let SAMPLE_LEXER =
-    "// DELETE THIS CONTENT IF YOU PUT COMBINED GRAMMAR IN Parser TAB\n" +
-    "lexer grammar ExprLexer;\n" +
-    "\n" +
-    "AND : 'and' ;\n" +
-    "OR : 'or' ;\n" +
-    "NOT : 'not' ;\n" +
-    "EQ : '=' ;\n" +
-    "COMMA : ',' ;\n" +
-    "SEMI : ';' ;\n" +
-    "LPAREN : '(' ;\n" +
-    "RPAREN : ')' ;\n" +
-    "LCURLY : '{' ;\n" +
-    "RCURLY : '}' ;\n" +
-    "\n" +
-    "INT : [0-9]+ ;\n" +
-    "ID: [a-zA-Z_][a-zA-Z_0-9]* ;\n" +
-    "WS: [ \\t\\n\\r\\f]+ -> skip ;";
+options {
+	tokenVocab = OwlsExprLexer;
+}
 
-let SAMPLE_INPUT =
-    "f(x,y) {\n" +
-    "    a = 3+foo;\n" +
-    "    x and y;\n" +
-    "}";
+root: rule EOF;
 
+rule: or_rule | or_rule nosuffix;
+
+nosuffix: op = MINUS primary_rule | op = NOT primary_rule;
+
+or_rule:
+	or_rule op = DIVIDE and_rule
+	| or_rule op = OR and_rule
+	| and_rule;
+
+and_rule:
+	and_rule op = PLUS near_rule
+	| and_rule op = AND near_rule
+	| near_rule;
+
+near_rule: near_rule op = near_op primary_rule | primary_rule;
+
+near_op: NEAROP | NEAR DIVIDE NUMBER | NEAR;
+
+primary_rule:
+	base_value
+	| concavalue
+	| kv_rule
+	| compare_rule
+	| nested_rule
+	| lop = LPAREN rule rop = RPAREN;
+
+kv_rule: NAME COLON base_value | NAME COLON concavalue;
+
+compare_rule:
+	NAME LTSIGN NUMBER
+	| NAME GTSIGN NUMBER
+	| NAME EQUAL NUMBER
+	| NAME LTSIGN EQUAL NUMBER
+	| NAME GTSIGN EQUAL NUMBER;
+
+nested_rule: NAME LSQUARE rule RSQUARE;
+
+concavalue: NAME | NUMBER | concavalue concavalue;
+
+base_value: STRING;
+
+operator: AND | OR | NOT | NEAR;
+
+delimiter: LPAREN | RPAREN | LSQUARE | RSQUARE;
+`
+
+let SAMPLE_LEXER =`lexer grammar OwlsExprLexer;
+
+options { caseInsensitive = true; }
+
+// Reserved words
+AND: 'AND';
+OR: 'OR';
+NOT: 'NOT';
+NEAR: 'NEAR';
+
+// Tokens
+NUMBER: [0-9]+;
+
+NAME: ('\\' . | ~[ +-/:=()<>[\]])+;
+
+STRING: '"' ( ~["\\\n\r] | '\\' .)* '"';
+
+// Operators
+PLUS: '+';
+DIVIDE: '/';
+MINUS: '-';
+
+// Delimiters
+LPAREN: '(';
+RPAREN: ')';
+LSQUARE: '[';
+RSQUARE: ']';
+LTSIGN: '<';
+GTSIGN: '>';
+EQUAL: '=';
+COLON: ':';
+NEAROP: '<near/' [0-9]+ '>';
+
+// Whitespace
+WS: [ \t\r\n]+ -> skip;
+`
+
+let SAMPLE_INPUT =`(AI/AIGC/artificial intelligence/"AI-generated"/"AI-powered"/"AI-written")+(social media/tech*/bytedance/tiktok/capcut/fizzo/music/meta/facebook/instagram/twitter/x/alphabet/google/snap/snapchat/openai/open ai/chatgpt/chat/chatbot/bard/spotify/midjourney/mid journey/stable diffusion/stability AI)+(nudity/underage/minors/misinformation/misinfo/disinfo/worrying/worrisome/controversial/election)+A-#`
 
 function processANTLRResults(response) {
     let parserSession = $("#grammar").data("parserSession")
